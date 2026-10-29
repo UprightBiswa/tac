@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TAC Ride POC</title>
+<style>
+:root{
+ --primary:#F36B21;--primary-light:#FF8A36;--primary-dark:#D94910;--primary-soft:#FFF0E7;
+ --navy:#15243C;--ink:#243044;--muted:#6D7788;--line:#E2E7EE;--bg:#F4F6F9;--surface:#FFFFFF;
+ --success:#167C59;--success-soft:#E6F4EE;--warning:#E8A317;--warning-soft:#FDF4E1;--error:#B54732;--error-soft:#FBECE8;
+ --map-water:#CFE6F5;--map-land:#EEF3E6;
+ --r-btn:14px;--r-in:12px;--r-card:16px;--shadow:0 4px 16px rgba(21,36,60,.06);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed}
+
+/* ---------- page chrome ---------- */
+.top{background:linear-gradient(120deg,#13213A,#2A3D59);color:#fff;padding:22px 16px}
+.top .in{max-width:1320px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:#FFC5A4}
+.top h1{margin:6px 0 4px;font-size:clamp(22px,3vw,32px);letter-spacing:-.03em;line-height:1.15}
+.top p{margin:0;color:#D9E2EE;font-size:13px;max-width:740px}
+.hbtns{display:flex;gap:8px;flex-wrap:wrap}
+.hbtn{border:1px solid #ffffff50;background:#ffffff14;color:#fff;border-radius:10px;padding:9px 13px;font-weight:700;font-size:13px}
+.hbtn.pri{background:var(--primary);border-color:var(--primary)}
+.tabs{max-width:1320px;margin:16px auto 0;padding:0 16px;display:flex;gap:8px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:#fff;color:var(--muted);padding:9px 14px;border-radius:10px;font-weight:700;font-size:13px}
+.tab.on{background:var(--navy);border-color:var(--navy);color:#fff}
+main{max-width:1320px;margin:auto;padding:16px 16px 40px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+.panel h2{font-size:16px;margin:0 0 4px;color:var(--navy)}
+.panel .sub{font-size:12px;color:var(--muted);margin:0 0 12px}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:0 16px 28px}
+
+/* ---------- demo layout ---------- */
+.demo{display:grid;grid-template-columns:260px 360px minmax(0,1fr);gap:18px;align-items:start}
+.grp{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.grp:first-of-type{margin-top:4px}
+.mapbtn{display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:1px solid transparent;background:none;border-radius:10px;padding:6px 8px;font-size:13px;color:var(--ink)}
+.mapbtn:hover{background:var(--bg)}
+.mapbtn .n{flex:none;width:32px;height:24px;border-radius:7px;background:var(--bg);display:grid;place-items:center;font-size:10px;font-weight:800;color:var(--muted)}
+.mapbtn.alt .n{border:1px dashed #C3CCD8;background:#fff}
+.mapbtn.seen .n{background:var(--primary-soft);color:var(--primary-dark)}
+.mapbtn.cur{background:var(--primary-soft);border-color:#F8C3A2;font-weight:700;color:var(--navy)}
+.mapbtn.cur .n{background:var(--primary);color:#fff;border:0}
+.mapbtn .tick{margin-left:auto;font-size:11px;color:var(--success)}
+.stage{display:flex;flex-direction:column;align-items:center;gap:10px;position:sticky;top:12px}
+.stagebar{display:flex;gap:8px;align-items:center;justify-content:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.stagebar button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px 11px;font-weight:700;font-size:12px;color:var(--navy)}
+.side .badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;padding:4px 8px;border-radius:999px;background:var(--primary-soft);color:var(--primary-dark)}
+.side .badge.alt{background:#EEF1F5;color:#566276}
+.side h3{font-size:22px;letter-spacing:-.02em;margin:8px 0 4px;color:var(--navy)}
+.side p{color:var(--muted);margin:0 0 12px}
+.side h4{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
+.nextbtn{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:11px;padding:10px 12px;margin-bottom:7px;font-weight:700;color:var(--navy)}
+.nextbtn:hover{border-color:var(--primary);background:#FFF8F3}
+.nextbtn small{font-weight:600;color:var(--muted);font-size:11px}
+.nextbtn .arr{color:var(--primary);font-size:16px}
+.progress{height:6px;border-radius:99px;background:#E8EBF0;overflow:hidden;margin:6px 0}
+.progress span{display:block;height:100%;background:var(--primary);transition:width .25s}
+.be{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:12px;color:#4B576A}
+.be b{color:var(--navy)}
+.notice{background:#FFF8F3;border-left:4px solid var(--primary);padding:10px 12px;border-radius:0 10px 10px 0;font-size:12px;color:#70462F;margin-top:14px}
+
+/* ---------- device ---------- */
+.device{width:340px;max-width:100%;height:700px;border-radius:50px;background:#0F1726;padding:11px;box-shadow:0 24px 50px rgba(21,36,60,.22)}
+.screen{width:100%;height:100%;border-radius:40px;overflow:hidden;background:#fff;position:relative;display:flex;flex-direction:column}
+.island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:92px;height:27px;background:#0B0F19;border-radius:20px;z-index:30}
+.sbar{height:46px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:4px 28px 0;font-size:13px;font-weight:700;color:var(--navy)}
+.sbar .ic{display:flex;gap:5px;align-items:center;font-size:10px}
+.batt{display:inline-block;width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;position:relative}
+.batt:after{content:"";position:absolute;inset:1.5px;right:4px;background:currentColor;border-radius:1px}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:2px 20px 14px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.foot{flex:none;padding:10px 20px 26px;background:#fff}
+.homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:118px;height:5px;border-radius:9px;background:#111;z-index:30;opacity:.85}
+.screen.dark{background:linear-gradient(160deg,var(--primary-dark),var(--primary) 55%,var(--primary-light))}
+.screen.dark .sbar,.screen.dark .homebar{color:#fff}
+.screen.dark .homebar{background:#fff}
+.screen.dark .foot{background:transparent}
+
+/* ---------- in-app components ---------- */
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 10px;min-height:36px}
+.hdr .t{font-weight:800;color:var(--navy);font-size:15px;flex:1;text-align:center}
+.iconbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-size:20px;line-height:1;color:var(--navy);flex:none}
+.minilogo{font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--primary);text-align:right;width:36px}
+.brandrow{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
+.brandmark{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:900;letter-spacing:.12em;color:var(--primary)}
+.brandmark i{width:26px;height:26px;border-radius:8px;background:var(--primary);color:#fff;font-style:normal;display:grid;place-items:center;font-size:9px;letter-spacing:0}
+.textlink{border:0;background:none;color:var(--primary-dark);font-weight:700;font-size:13px;padding:6px;text-decoration:underline;text-underline-offset:2px}
+.textlink.muted{color:var(--muted);text-decoration:none}
+.title{font-size:26px;line-height:1.12;letter-spacing:-.03em;font-weight:800;color:var(--navy);margin:6px 0 8px}
+.title em{font-style:normal;color:var(--primary)}
+.copy{font-size:13.5px;color:var(--muted);margin:0 0 14px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:52px;border-radius:var(--r-btn);border:0;font-weight:700;font-size:15px}
+.btn.primary{background:linear-gradient(90deg,var(--primary),var(--primary-light));color:#fff;box-shadow:0 6px 14px rgba(243,107,33,.28)}
+.btn.primary:disabled{background:#F8C6A9;box-shadow:none}
+.btn.outline{background:#fff;border:1.5px solid var(--line);color:var(--navy)}
+.btn.white{background:#fff;color:var(--primary-dark)}
+.btn.danger{background:var(--error);color:#fff}
+.btn+.btn{margin-top:10px}
+.or{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted);margin:10px 0}
+.or:before,.or:after{content:"";flex:1;height:1px;background:var(--line)}
+.label{font-size:12px;font-weight:700;color:var(--navy);margin:12px 0 6px;display:block}
+.input{width:100%;height:52px;border:1.5px solid var(--line);border-radius:var(--r-in);padding:0 14px;background:#F9FAFB;font-size:15px;outline:none}
+.input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(243,107,33,.12)}
+textarea.input{height:70px;padding:12px 14px;resize:none}
+.err{color:var(--error);font-size:12px;margin-top:6px;min-height:16px}
+.row{display:flex;gap:8px;align-items:center}
+.cc{width:104px;flex:none}
+.card{border:1px solid var(--line);border-radius:var(--r-card);background:#fff;padding:14px;box-shadow:var(--shadow)}
+.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chips.scrollx{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -20px;padding:0 20px 2px}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;border-radius:999px;padding:3px 8px;background:var(--bg);color:#4B576A}
+.tag.eco{background:var(--success-soft);color:var(--success)}
+.tag.warn{background:var(--warning-soft);color:#93650A}
+.tag.ok{background:var(--success-soft);color:var(--success)}
+.mapwrap{position:relative;border-radius:18px;overflow:hidden;margin:4px 0 14px;border:1px solid var(--line)}
+.mapwrap svg{display:block;width:100%}
+.mapchip{position:absolute;background:#fff;border-radius:999px;padding:6px 11px;font-size:11px;font-weight:700;color:var(--navy);box-shadow:0 3px 10px rgba(21,36,60,.15);display:flex;gap:6px;align-items:center}
+.benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;font-size:11px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.benefits span{display:block;font-size:20px;margin-bottom:2px}
+.otp{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 10px}
+.otp div{height:58px;border:1.5px solid var(--line);border-radius:12px;display:grid;place-items:center;font-size:24px;font-weight:800;color:var(--navy);background:#F9FAFB}
+.otp div.act{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(243,107,33,.12)}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#E3E6EC;margin:10px -20px -26px;padding:8px 8px 30px}
+.keypad button{height:42px;border:0;border-radius:8px;background:#fff;font-size:19px;font-weight:600;color:#111;box-shadow:0 1px 0 #B9BEC8}
+.keypad button.blank{background:transparent;box-shadow:none}
+.toggle{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:12px}
+.toggle button{border:0;background:none;border-radius:9px;height:38px;font-weight:700;font-size:13px;color:var(--muted)}
+.toggle button.on{background:#fff;color:var(--navy);box-shadow:0 2px 6px rgba(21,36,60,.1)}
+.whereto{display:flex;align-items:center;gap:12px;width:100%;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:14px;text-align:left;box-shadow:var(--shadow)}
+.whereto b{display:block;color:var(--navy);font-size:15px}
+.whereto small{color:var(--muted)}
+.whereto .s{width:36px;height:36px;border-radius:10px;background:var(--primary-soft);display:grid;place-items:center;font-size:17px}
+.recent{display:flex;align-items:center;gap:12px;width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:11px 0;text-align:left}
+.recent .ico{width:34px;height:34px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:14px;flex:none}
+.recent b{display:block;font-size:13.5px;color:var(--navy)}
+.recent small{font-size:12px;color:var(--muted)}
+.nav{flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);padding:8px 6px 26px;background:#fff}
+.nav button{border:0;background:none;font-size:10.5px;font-weight:700;color:#98A1AF;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nav button span{font-size:18px;filter:grayscale(1);opacity:.6}
+.nav button.on{color:var(--primary)}
+.nav button.on span{filter:none;opacity:1}
+.fromto{border:1.5px solid var(--line);border-radius:14px;padding:4px 12px;position:relative}
+.fromto .ln{display:flex;align-items:center;gap:10px;min-height:48px}
+.fromto .ln+.ln{border-top:1px solid var(--line)}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.fromto input{border:0;outline:0;flex:1;font-size:14.5px;background:none;min-width:0}
+.swap{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:14px}
+.sugg button{display:flex;gap:10px;align-items:center;width:100%;border:0;background:none;border-bottom:1px solid var(--line);padding:10px 2px;text-align:left}
+.sugg b{font-size:13.5px;color:var(--navy);display:block}
+.sugg small{color:var(--muted);font-size:12px}
+.stepper{display:flex;align-items:center;justify-content:space-between;border:1.5px solid var(--line);border-radius:12px;padding:6px 8px 6px 14px}
+.stepper b{font-size:15px;color:var(--navy)}
+.stepper .ctl{display:flex;align-items:center;gap:12px}
+.stepper button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:18px;font-weight:700;color:var(--navy)}
+.stepper button:disabled{opacity:.35}
+.ridecard{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.ridecard:hover{border-color:var(--primary)}
+.times{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;font-weight:800;color:var(--navy);font-size:15px}
+.times i{height:2px;background:repeating-linear-gradient(90deg,#C9D0DA 0 5px,transparent 5px 9px);position:relative}
+.times small{display:block;font-weight:600;color:var(--muted);font-size:11px}
+.drv{display:flex;align-items:center;gap:10px}
+.av{width:40px;height:40px;border-radius:50%;color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center;flex:none}
+.av.lg{width:52px;height:52px;font-size:16px}
+.drv b{color:var(--navy);display:block;font-size:14px}
+.drv small{color:var(--muted);font-size:12px}
+.price{margin-left:auto;text-align:right}
+.price b{font-size:18px;color:var(--navy)}
+.price small{display:block;font-size:11px;color:var(--muted)}
+.hr{height:1px;background:var(--line);margin:11px 0}
+.timeline{position:relative;padding-left:22px}
+.timeline:before{content:"";position:absolute;left:5px;top:8px;bottom:8px;width:2px;background:var(--line)}
+.timeline div{position:relative;padding:4px 0 10px}
+.timeline div:before{content:"";position:absolute;left:-22px;top:9px;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--primary)}
+.timeline div:last-child:before{background:var(--primary)}
+.timeline b{color:var(--navy)}
+.timeline small{display:block;color:var(--muted)}
+.radio{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:11px 12px;margin-bottom:8px}
+.radio i{width:18px;height:18px;border-radius:50%;border:2px solid #C3CCD8;flex:none}
+.radio.on{border-color:var(--primary);background:#FFF8F3}
+.radio.on i{border:5px solid var(--primary)}
+.radio b{display:block;font-size:13.5px;color:var(--navy)}
+.radio small{color:var(--muted);font-size:12px}
+.sum{display:flex;justify-content:space-between;font-size:13.5px;padding:3px 0}
+.sum.total{font-weight:800;color:var(--navy);font-size:16px;border-top:1px dashed var(--line);margin-top:6px;padding-top:9px}
+.success{text-align:center;padding-top:6px}
+.check{width:76px;height:76px;border-radius:50%;background:var(--success-soft);display:grid;place-items:center;margin:8px auto 12px}
+.check span{width:54px;height:54px;border-radius:50%;background:var(--success);color:#fff;font-size:28px;font-weight:800;display:grid;place-items:center}
+.eco{display:flex;gap:10px;align-items:center;background:var(--success-soft);color:#0F5E43;border-radius:14px;padding:12px 14px;font-size:13px;font-weight:600;text-align:left}
+.eco span{font-size:22px}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:5px 0}
+.kv span{color:var(--muted)}
+.kv b{color:var(--navy);text-align:right}
+.stars{display:flex;justify-content:center;gap:8px;margin:10px 0 14px}
+.stars button{border:0;background:none;font-size:34px;line-height:1;color:#D5DAE2;padding:0}
+.stars button.on{color:#F5B301}
+.segtabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);margin:0 -20px 12px}
+.segtabs button{border:0;background:none;height:40px;font-weight:700;color:var(--muted);border-bottom:2.5px solid transparent}
+.segtabs button.on{color:var(--primary);border-bottom-color:var(--primary)}
+.sos{width:48px;height:48px;border-radius:50%;background:var(--error);color:#fff;border:0;font-weight:800;font-size:12px;flex:none}
+.overlay{position:absolute;inset:0;background:rgba(15,23,38,.45);z-index:20;display:flex;align-items:center;justify-content:center;padding:28px}
+.dialog{background:#F2F2F7;border-radius:18px;width:100%;overflow:hidden;text-align:center}
+.dialog .bd{padding:18px 16px 14px}
+.dialog .bd div{font-size:30px}
+.dialog .bd b{display:block;font-size:15px;color:#111;margin:6px 0}
+.dialog .bd small{font-size:12px;color:#555}
+.dialog button{display:block;width:100%;border:0;border-top:1px solid #D1D1D6;background:none;height:46px;font-size:15px;color:#0A64D6;font-weight:600}
+.loading{background:#fff;border-radius:18px;padding:22px 26px;text-align:center;font-weight:700;color:var(--navy)}
+.spin{width:38px;height:38px;border-radius:50%;border:4px solid var(--primary-soft);border-top-color:var(--primary);margin:0 auto 12px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.splash{color:#fff;display:flex;flex-direction:column;height:100%;padding-top:70px}
+.logo-ph{width:96px;height:96px;border-radius:26px;background:#fff;color:var(--primary);display:grid;place-items:center;font-size:30px;font-weight:900;letter-spacing:.02em;box-shadow:0 12px 30px rgba(0,0,0,.18)}
+.logo-sub{font-size:12px;font-weight:800;letter-spacing:.3em;margin:14px 0 0}
+.sp-title{font-size:34px;line-height:1.05;letter-spacing:-.035em;margin:auto 0 22px;font-weight:800}
+.sp-ben{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px;font-weight:700;margin-bottom:6px}
+.sp-ben span{display:block;font-size:22px;margin-bottom:3px}
+.sp-foot{text-align:center;font-size:12px;opacity:.85;margin:12px 0 0}
+.emptyill{width:110px;height:110px;border-radius:50%;background:var(--primary-soft);display:grid;place-items:center;font-size:46px;margin:22px auto 14px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 16px;border-radius:12px;font-size:13px;z-index:100;max-width:min(420px,92vw);box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center}
+
+/* ---------- flow map tab ---------- */
+.flowrow{margin-bottom:22px}
+.flowrow h3{font-size:14px;color:var(--navy);margin:0 0 10px}
+.chain{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:6px}
+.fnode{flex:none;width:128px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;text-align:left}
+.fnode:hover{border-color:var(--primary);background:#FFF8F3}
+.fnode .n{font-size:10px;font-weight:800;color:var(--primary)}
+.fnode b{display:block;color:var(--navy);font-size:12.5px;margin:2px 0}
+.fnode small{display:block;color:var(--muted);font-size:10.5px;line-height:1.35}
+.farrow{flex:none;width:24px;display:grid;place-items:center;color:var(--primary);font-weight:900}
+.alts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.altbtn{border:1px dashed #C3CCD8;background:#fff;border-radius:10px;padding:8px 11px;font-size:12px;color:#4B576A;text-align:left}
+.altbtn b{color:var(--navy)}
+.altbtn:hover{border-color:var(--primary)}
+
+/* ---------- theme tab ---------- */
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.swatch{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.swatch div{height:62px}
+.swatch p{margin:0;padding:8px 10px;font-size:12px}
+.swatch b{display:block;color:var(--navy)}
+.swatch code{color:var(--muted);font-size:11px}
+.combo{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.combo div{border-radius:12px;padding:14px;font-weight:700;font-size:13px}
+.combo small{display:block;font-weight:500;font-size:11px;opacity:.85;margin-top:4px}
+.themegrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.typerow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-bottom:1px solid var(--line);padding:8px 0}
+.typerow code{font-size:11px;color:var(--muted);white-space:nowrap}
+.comp{display:grid;gap:10px;max-width:320px}
+
+@media (max-width:1150px){
+ .demo{grid-template-columns:240px minmax(0,1fr)}
+ .side{grid-column:1 / -1}
+ .stage{position:static}
+}
+@media (max-width:760px){
+ .demo{grid-template-columns:1fr}
+ .stage{order:-1}
+ .themegrid{grid-template-columns:1fr}
+ .device{height:660px}
+}
+@media print{.tabs,.hbtns,.stagebar{display:none}.stage{position:static}}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+ <div>
+  <div class="eyebrow">TAC Industries · Clickable front-end POC · No backend</div>
+  <h1>Ride-sharing app flow</h1>
+  <p>Tap inside the phone to move to the next screen, or use the flow list and the "Next actions" panel to jump to any point. Covers onboarding, search location, available riders, booking, the trip and the driver's offer-a-ride path.</p>
+ </div>
+ <div class="hbtns"><button class="hbtn" onclick="window.print()">Print / PDF</button><button class="hbtn pri" onclick="restart()">↺ Restart demo</button></div>
+</div></header>
+
+<div class="tabs">
+ <button class="tab on" data-tab="demo">▶ Clickable demo</button>
+ <button class="tab" data-tab="flow">Flow map</button>
+ <button class="tab" data-tab="theme">Theme &amp; colours</button>
+</div>
+
+<main>
+ <section id="demo" class="demo">
+  <aside class="panel" id="flowlist"></aside>
+  <div class="stage">
+   <div class="device"><div class="screen" id="screen"></div></div>
+   <div class="stagebar"><button onclick="back()">‹ Back</button><span id="stepinfo"></span><button onclick="restart()">↺ Restart</button></div>
+  </div>
+  <aside class="panel side" id="side"></aside>
+ </section>
+
+ <section id="flow" hidden>
+  <div class="panel">
+   <h2>Flow map</h2>
+   <p class="sub">Solid arrows show the main path; dashed boxes are alternative or fallback paths. Click any box to open that screen in the demo.</p>
+   <div id="flowmap"></div>
+  </div>
+ </section>
+
+ <section id="theme" hidden>
+  <div class="panel">
+   <h2>Theme &amp; colour combinations</h2>
+   <p class="sub">Brand tokens used across every screen. The same values become the Flutter <code>ThemeData</code> later.</p>
+   <div class="sw" id="swatches"></div>
+   <h2 style="margin-top:22px">Approved combinations</h2>
+   <p class="sub">Use these pairings for text and backgrounds.</p>
+   <div class="combo">
+    <div style="background:linear-gradient(90deg,#F36B21,#FF8A36);color:#fff">White on orange gradient<small>Primary buttons only. Use bold 15px+ text; contrast is about 3:1, so it is OK for large bold labels but not small text.</small></div>
+    <div style="background:#fff;color:#15243C;border:1px solid #E2E7EE">Navy on white<small>Headings and key values. High contrast.</small></div>
+    <div style="background:#fff;color:#6D7788;border:1px solid #E2E7EE">Muted grey on white<small>Supporting text, hints and captions.</small></div>
+    <div style="background:#FFF0E7;color:#B4440E">Dark orange on soft orange<small>Chips, badges and selected states.</small></div>
+    <div style="background:#15243C;color:#fff">White on navy<small>Selected chips, dark headers and toasts.</small></div>
+    <div style="background:#E6F4EE;color:#167C59">Green on soft green<small>Booked, verified and CO₂-saved messages.</small></div>
+    <div style="background:#FDF4E1;color:#93650A">Amber on soft amber<small>"1 seat left" and pending states.</small></div>
+    <div style="background:#FBECE8;color:#B54732">Red on soft red<small>Errors, cancel and SOS.</small></div>
+   </div>
+   <div class="themegrid">
+    <div>
+     <h2>Typography</h2>
+     <p class="sub">Inter (or the system font fallback).</p>
+     <div class="typerow"><span style="font-size:28px;font-weight:800;color:var(--navy);letter-spacing:-.03em">Display</span><code>26–28 / 800</code></div>
+     <div class="typerow"><span style="font-size:18px;font-weight:700;color:var(--navy)">Title</span><code>18 / 700</code></div>
+     <div class="typerow"><span style="font-size:15px">Body text</span><code>14–15 / 400</code></div>
+     <div class="typerow"><span style="font-size:14px;font-weight:700">Button label</span><code>14–15 / 700</code></div>
+     <div class="typerow"><span style="font-size:12px;color:var(--muted)">Caption</span><code>12 / 500</code></div>
+     <h2 style="margin-top:18px">Shape &amp; spacing</h2>
+     <p class="sub" style="margin:0">8-pt grid · screen padding 20 · buttons and inputs 52 high · radius: button 14, input 12, card 16, sheet 24 · touch target ≥ 44.</p>
+    </div>
+    <div>
+     <h2>Components</h2>
+     <p class="sub">Live samples using the tokens.</p>
+     <div class="comp">
+      <button class="btn primary">Continue</button>
+      <button class="btn primary" disabled>Disabled</button>
+      <button class="btn outline">Secondary</button>
+      <input class="input" placeholder="Input field">
+      <div class="chips"><span class="chip on">Selected</span><span class="chip">Chip</span><span class="tag eco">🌱 Saves 9 kg CO₂</span><span class="tag warn">1 seat left</span><span class="tag ok">✓ Verified</span></div>
+     </div>
+    </div>
+   </div>
+   <div class="notice"><b>Logo:</b> the placeholder "TAC" mark is used throughout. Please confirm the approved logo: the orange mark from the design references or the navy mark from the company profile.</div>
+  </div>
+ </section>
+</main>
+<footer>TAC Industries · Front-end POC for internal review · All data is fictional and nothing is sent or stored · OTP, Google sign-in, location, payments and chat are simulated.</footer>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- mock data ---------- */
+const PLACES=[
+ {name:'Galway',sub:'Eyre Square',min:150,f:1},
+ {name:'Cork',sub:'Kent Station',min:165,f:1.15},
+ {name:'Limerick',sub:'Colbert Station',min:140,f:.95},
+ {name:'Athlone',sub:'Town Centre',min:85,f:.65},
+ {name:'Belfast',sub:'Lanyon Place',min:135,f:1.05},
+ {name:'Dublin Airport',sub:'Terminal 1',min:30,f:.4},
+ {name:'Belmullet',sub:'Co. Mayo',min:0,f:0,none:true}
+];
+const DRIVERS=[
+ {id:'r1',name:'Seán M.',ini:'SM',col:'#F36B21',rating:4.9,reviews:128,trips:212,dep:'08:30',pickup:'Heuston Station',base:14,seats:3,car:'Toyota Corolla · Silver',plate:'191-D-12345',co2:9,prefs:['🚭 No smoking','🎵 Music OK','🧳 1 bag each']},
+ {id:'r2',name:'Aoife K.',ini:'AK',col:'#167C59',rating:4.8,reviews:64,trips:87,dep:'10:15',pickup:'Red Cow Luas',base:12,seats:1,car:'Volkswagen Golf · Blue',plate:'201-KE-4471',co2:9,prefs:['🚭 No smoking','🤫 Quiet ride','🐾 Pets OK']},
+ {id:'r3',name:'Ciarán O.',ini:'CO',col:'#15243C',rating:4.6,reviews:31,trips:40,dep:'13:00',pickup:'Pearse Street, Dublin 2',base:11,seats:2,car:'Skoda Octavia · Grey',plate:'182-D-9032',co2:8,prefs:['🚭 No smoking','🎵 Music OK']},
+ {id:'r4',name:'Niamh B.',ini:'NB',col:'#7A4FD0',rating:5.0,reviews:12,trips:15,dep:'17:45',pickup:'UCD Belfield',base:15,seats:4,car:'Tesla Model 3 · White · EV',plate:'231-D-5520',co2:14,prefs:['⚡ Electric car','🚭 No smoking','🧳 2 bags each']}
+];
+const DATES=['Today','Tomorrow','Sat 31 Oct'];
+const DATELONG=['Today, Thu 29 Oct','Tomorrow, Fri 30 Oct','Sat 31 Oct'];
+const CARS=['Toyota Yaris · Red · 211-D-7781','Hyundai Kona EV · White · 222-D-1408'];
+
+/* ---------- screen metadata (side panel + flow list) ---------- */
+const META={
+ splash:{n:'01',t:'Splash',d:'Brand intro with the TAC sustainability message.',nx:[['Get started','welcome']],be:'—'},
+ welcome:{n:'02',t:'Welcome',d:'Value proposition and sign-in choices.',nx:[['Continue with phone number','phone'],['Continue with Google','google'],['Skip, browse as guest','home']],be:'Auth'},
+ google:{n:'G',alt:1,t:'Google sign-in',d:'Placeholder for the optional Google route. Needs approved OAuth credentials and a server-side token check.',nx:[['Use phone instead','phone'],['Back to welcome','welcome']],be:'Auth · POST /auth/google'},
+ phone:{n:'03',t:'Phone number',d:'Ireland +353 by default. Continue unlocks at 7+ digits.',nx:[['Continue','otp']],be:'Auth · POST /auth/otp/request'},
+ otp:{n:'04',t:'Verify code',d:'4-digit code with on-screen keypad and resend timer. The demo accepts any 4 digits.',nx:[['Verify','details'],['Change number','phone']],be:'Auth · POST /auth/otp/verify'},
+ details:{n:'05',t:'Your details',d:'First and last name, both required.',nx:[['Continue','location']],be:'Users · PATCH /users/me'},
+ location:{n:'06',t:'Location access',d:'Explains why location is needed, then shows the system permission prompt.',nx:[['Allow location','home'],['Enter address manually','manual']],be:'Device permission · maps provider'},
+ manual:{n:'06b',alt:1,t:'Manual address',d:'Fallback when permission is denied or skipped.',nx:[['Save address','home']],be:'Geocoding provider'},
+ home:{n:'07',t:'Home',d:'Map, greeting, Find / Offer a ride toggle and the "Where to?" search.',nx:[['Where to?','search'],['Offer a ride (driver)','d1'],['My rides','myrides']],be:'Users · Rides'},
+ search:{n:'08',t:'Search location',d:'From / To with place suggestions, date and number of seats.',nx:[['Search rides','results'],['Example: no rides found','empty']],be:'Search · maps autocomplete'},
+ results:{n:'09',t:'Available rides',d:'Drivers going your way. Sort by earliest, cheapest or top rated.',nx:[['Open a ride','ride'],['Edit search','search']],be:'Search · PostGIS route match'},
+ empty:{n:'09b',alt:1,t:'No rides found',d:'Empty state with ride alert, change search, or offer the ride yourself.',nx:[['Change search','search'],['Offer this ride','d1']],be:'Notifications · ride alerts'},
+ ride:{n:'10',t:'Ride details',d:'Route, pickup and drop-off, driver trust signals, car and preferences.',nx:[['Book seat','book']],be:'Rides · Vehicles · Verification'},
+ book:{n:'11',t:'Book ride',d:'Seats, pickup point, payment method and price summary.',nx:[['Confirm booking','confirmed']],be:'Bookings · Payments'},
+ confirmed:{n:'12',t:'Booking confirmed',d:'Success state with booking reference and CO₂ saving.',nx:[['Start trip (demo)','trip'],['View my rides','myrides'],['Back to home','home']],be:'Bookings · Notifications'},
+ myrides:{n:'13',t:'My rides',d:'Upcoming and past trips.',nx:[['Open upcoming booking','confirmed'],['Home','home']],be:'Bookings'},
+ trip:{n:'14',t:'Trip in progress',d:'Live car position (animated), driver contact, share trip and SOS.',nx:[['End trip (demo)','rate']],be:'Rides · Trust & safety'},
+ rate:{n:'15',t:'Trip complete',d:'Fare paid, CO₂ saved and driver rating.',nx:[['Submit rating','home']],be:'Users · ratings'},
+ d1:{n:'D1',t:'Offer a ride',d:'The driver sets route, date and departure time.',nx:[['Next','d2']],be:'Rides'},
+ d2:{n:'D2',t:'Seats & price',d:'Seats, price per seat with a suggested range, and car.',nx:[['Publish ride','d3']],be:'Rides · Vehicles'},
+ d3:{n:'D3',t:'Ride published',d:'Confirmation. Passengers can now find this ride.',nx:[['Back to home','home']],be:'Rides · Notifications'}
+};
+const GROUPS=[
+ ['Onboarding',['splash','welcome','google','phone','otp','details','location','manual']],
+ ['Rider · find & book',['home','search','results','empty','ride','book','confirmed','myrides','trip','rate']],
+ ['Driver · offer a ride',['d1','d2','d3']]
+];
+const PRIMARY=['splash','welcome','phone','otp','details','location','home','search','results','ride','book','confirmed','trip','rate'];
+
+/* ---------- state ---------- */
+const fresh=()=>({cur:'splash',hist:[],seen:new Set(['splash']),cc:'+353',phone:'',otp:'',timer:24,first:'',last:'',loc:'',addr:'',
+ mode:'find',to:'',q:'',date:1,seats:1,sort:'earliest',ride:null,bseats:1,pick:0,pay:'card',note:'',booking:null,bookings:[],tab:'up',rating:0,tags:[],
+ offer:{from:'Dublin · Heuston Station',to:'Galway · Eyre Square',date:1,time:'08:30',seats:3,price:13,car:0},overlay:'',loadMsg:''});
+let S=fresh();
+
+/* ---------- helpers ---------- */
+const place=()=>PLACES.find(p=>p.name===S.to);
+const addMin=(t,m)=>{let[h,mm]=t.split(':').map(Number);let x=h*60+mm+m;return String(Math.floor(x/60)%24).padStart(2,'0')+':'+String(x%60).padStart(2,'0')};
+const dur=m=>`${Math.floor(m/60)}h ${String(m%60).padStart(2,'0')}m`;
+const eur=n=>'€'+(Number.isInteger(n)?n:n.toFixed(2));
+function rides(){
+ const p=place(); if(!p||p.none) return [];
+ const list=DRIVERS.filter(d=>d.seats>=S.seats).map(d=>({...d,dest:p,arr:addMin(d.dep,p.min),price:Math.max(5,Math.round(d.base*p.f)),co2:Math.max(2,Math.round(d.co2*p.f))}));
+ if(S.sort==='cheapest') list.sort((a,b)=>a.price-b.price);
+ if(S.sort==='rating') list.sort((a,b)=>b.rating-a.rating);
+ return list;
+}
+const pickups=r=>[r.pickup,'O’Connell Street, Dublin 1'];
+const total=()=>S.ride.price*S.bseats+0.5;
+function makeBooking(){
+ const r=S.ride;
+ S.booking={ref:'TAC-'+(10000+Math.floor(Math.random()*89999)),ride:r,seats:S.bseats,pickup:pickups(r)[S.pick],pay:S.pay==='card'?'Card •••• 4242 (demo)':'Cash to driver',total:total(),date:DATELONG[S.date]};
+ S.bookings.unshift(S.booking);
+}
+function toast(m){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+const notInPoc=f=>toast(`${f} is planned for a later phase. Not part of this POC.`);
+
+/* ---------- navigation ---------- */
+function go(id){
+ if(id!==S.cur) S.hist.push(S.cur);
+ S.cur=id; S.seen.add(id); S.overlay='';
+ if(id==='otp'){S.timer=24;S.otp=''}
+ render(); const sc=$('#scroll'); if(sc) sc.scrollTop=0;
+}
+function back(){const p=S.hist.pop(); if(p){S.cur=p;S.overlay='';render()} else toast('This is the first screen.')}
+function restart(){S=fresh();render();showTab('demo')}
+function ensure(id){
+ const afterOnb=['home','search','results','empty','ride','book','confirmed','myrides','trip','rate','d1','d2','d3'];
+ if(afterOnb.includes(id)&&!S.first){S.first='Alex';S.last='Byrne';S.phone=S.phone||'83 456 7890';S.loc=S.loc||'Dublin 2, Co. Dublin'}
+ if(id==='otp'&&!S.phone) S.phone='83 456 7890';
+ if(id==='empty'){S.to='Belmullet';S.q='Belmullet'}
+ if(['results','ride','book','confirmed','trip','rate','myrides'].includes(id)&&(!place()||place().none||!rides().length)){S.to='Galway';S.q='Galway';S.seats=1}
+ if(['ride','book','confirmed','trip','rate','myrides'].includes(id)&&!S.ride){S.ride=rides()[0];S.bseats=1}
+ if(['confirmed','trip','rate','myrides'].includes(id)&&!S.booking) makeBooking();
+}
+function jump(id){ensure(id);go(id)}
+function loading(msg,next,fn){S.overlay='loading';S.loadMsg=msg;render();setTimeout(()=>{S.overlay='';fn&&fn();go(next)},1100)}
+
+/* ---------- static map (SVG) ---------- */
+const ROUTE='M42 118 C90 104 110 62 160 72 S236 44 262 30';
+const pin=(x,y,c)=>`<g transform="translate(${x},${y})"><path d="M0 0 C-6 -8 -9 -12 -9 -17 A9 9 0 1 1 9 -17 C9 -12 6 -8 0 0Z" fill="${c}" stroke="#fff" stroke-width="2"/><circle cy="-17" r="3.5" fill="#fff"/></g>`;
+function map({h=160,route=false,me=false,car=false,label=''}={}){
+ return `<div class="mapwrap"><svg viewBox="0 0 300 160" preserveAspectRatio="xMidYMid slice" style="height:${h}px" role="img" aria-label="Map preview">
+ <rect width="300" height="160" fill="#EEF3E6"/>
+ <path d="M0 128 C60 108 84 156 150 140 S258 150 300 124 V160 H0Z" fill="#CFE6F5"/>
+ <path d="M206 0 C226 38 268 50 300 44 V0Z" fill="#CFE6F5"/>
+ <rect x="26" y="18" width="54" height="32" rx="8" fill="#DCEBCF"/><rect x="188" y="78" width="44" height="30" rx="8" fill="#DCEBCF"/>
+ <path d="M-10 58 L310 96" stroke="#fff" stroke-width="10"/><path d="M-10 58 L310 96" stroke="#F4C35A" stroke-width="5"/>
+ <path d="M118 -10 L160 170" stroke="#fff" stroke-width="7"/><path d="M0 28 L300 18" stroke="#fff" stroke-width="4"/><path d="M60 170 L96 -10" stroke="#fff" stroke-width="4"/>
+ ${route?`<path d="${ROUTE}" fill="none" stroke="#F36B21" stroke-width="4.5" stroke-linecap="round"/>${pin(42,118,'#167C59')}${pin(262,30,'#F36B21')}`:''}
+ ${me?`<circle cx="150" cy="84" r="16" fill="#F36B21" opacity=".16"><animate attributeName="r" values="12;30;12" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values=".28;.04;.28" dur="2.4s" repeatCount="indefinite"/></circle><circle cx="150" cy="84" r="7" fill="#F36B21" stroke="#fff" stroke-width="3"/>`:''}
+ ${car?`<g><circle r="9" fill="#15243C" stroke="#fff" stroke-width="2.5"/><text y="3.5" text-anchor="middle" font-size="9" fill="#fff">🚗</text><animateMotion dur="9s" repeatCount="indefinite" path="${ROUTE}"/></g>`:''}
+ </svg>${label}</div>`;
+}
+
+/* ---------- reusable UI ---------- */
+const hdr=(t='')=>`<div class="hdr"><button class="iconbtn" onclick="back()" aria-label="Back">‹</button><span class="t">${t}</span><span class="minilogo">TAC</span></div>`;
+const nav=a=>`<nav class="nav">${[['home','🏠','Home',"go('home')"],['myrides','🎫','My rides',"go('myrides')"],['msg','💬','Messages',"notInPoc('Messaging')"],['me','👤','Profile',"notInPoc('Profile')"]].map(([k,i,l,f])=>`<button class="${a===k?'on':''}" onclick="${f}"><span>${i}</span>${l}</button>`).join('')}</nav>`;
+const av=(r,lg)=>`<span class="av ${lg?'lg':''}" style="background:${r.col}">${r.ini}</span>`;
+const stepper=(val,dec,inc,min,max)=>`<div class="ctl"><button onclick="${dec}" ${val<=min?'disabled':''} aria-label="Decrease">−</button><b>${val}</b><button onclick="${inc}" ${val>=max?'disabled':''} aria-label="Increase">+</button></div>`;
+
+/* ---------- screens ---------- */
+const R={};
+R.splash=()=>({cls:'dark',html:`<div class="splash">
+ <div class="logo-ph">TAC</div><div class="logo-sub">TAC INDUSTRIES</div>
+ <div class="sp-title">Rides for a cleaner, closer Ireland.</div>
+ <div class="sp-ben"><div><span>🚗</span>Share rides</div><div><span>🌱</span>Lower emissions</div><div><span>🤝</span>Stronger communities</div></div></div>`,
+ foot:`<button class="btn white" onclick="go('welcome')">Get started  ›</button><p class="sp-foot">Together for a greener tomorrow</p>`});
+
+R.welcome=()=>({html:`<div class="brandrow"><span class="brandmark"><i>TAC</i>TAC INDUSTRIES</span><button class="textlink muted" onclick="jump('home')">Skip</button></div>
+ <div class="title">Share the ride.<br><em>A cleaner Ireland together.</em></div>
+ <p class="copy">Find nearby drivers and passengers, share your journey and make a positive impact across Ireland.</p>
+ ${map({h:130,route:true,label:'<span class="mapchip" style="right:10px;bottom:10px">🚗 Dublin → Galway · 2h 30m</span>'})}
+ <div class="benefits"><div><span>💶</span>Save money</div><div><span>👋</span>Meet people</div><div><span>🌿</span>Reduce emissions</div></div>`,
+ foot:`<button class="btn primary" onclick="go('phone')">Continue with phone number  ›</button><div class="or">or</div><button class="btn outline" onclick="go('google')"><b style="color:#4285F4">G</b> Continue with Google</button>`});
+
+R.google=()=>({html:`${hdr('Google sign-in')}<div class="emptyill">G</div><div class="title" style="text-align:center;font-size:22px">Continue with Google</div>
+ <p class="copy" style="text-align:center">This is a placeholder for the optional Google route. Real sign-in needs approved OAuth credentials and server-side verification.</p>
+ <div class="notice">No Google account is contacted in this prototype.</div>`,
+ foot:`<button class="btn primary" onclick="go('phone')">Use phone number instead</button><button class="btn outline" onclick="back()">Back</button>`});
+
+R.phone=()=>{const ok=S.phone.replace(/\D/g,'').length>=7;return{html:`${hdr()}
+ <div class="title">Enter your<br>phone number</div><p class="copy">We’ll text you a code to confirm it’s you.</p>
+ <div class="row"><select class="input cc" onchange="S.cc=this.value"><option value="+353" ${S.cc==='+353'?'selected':''}>🇮🇪 +353</option><option value="+44" ${S.cc==='+44'?'selected':''}>🇬🇧 +44</option><option value="+91" ${S.cc==='+91'?'selected':''}>🇮🇳 +91</option></select>
+ <input id="phoneIn" class="input" inputmode="tel" placeholder="83 456 7890" value="${esc(S.phone)}" oninput="S.phone=this.value;const d=this.value.replace(/\\D/g,'').length;$('#phoneBtn').disabled=d<7;$('#phoneErr').textContent=d>0&&d<7?'Enter at least 7 digits':''"></div>
+ <div class="err" id="phoneErr"></div>
+ <p class="copy" style="font-size:12px">Demo only: no SMS is sent.</p>`,
+ foot:`<button id="phoneBtn" class="btn primary" ${ok?'':'disabled'} onclick="loading('Sending code…','otp')">Continue  ›</button>`}};
+
+R.otp=()=>{const d=S.otp.split('');return{html:`${hdr()}
+ <div class="title">Enter the 4-digit code</div>
+ <p class="copy" style="margin:0">We’ve sent a code to ${esc(S.cc)} ${esc(S.phone)}. <button class="textlink" style="padding:0" onclick="back()">Change</button></p>
+ <div class="otp">${[0,1,2,3].map(i=>`<div class="${i===d.length?'act':''}">${d[i]||''}</div>`).join('')}</div>
+ <p class="copy" id="resend" style="font-size:13px">${resendText()}</p>
+ <p class="copy" style="font-size:12px">Demo: enter any 4 digits.</p>`,
+ foot:`<button class="btn primary" ${d.length<4?'disabled':''} onclick="loading('Verifying…','details')">Verify  ›</button>
+ <div class="keypad">${['1','2','3','4','5','6','7','8','9','','0','⌫'].map(k=>k===''?'<button class="blank" tabindex="-1"></button>':`<button onclick="key('${k}')">${k}</button>`).join('')}</div>`}};
+const resendText=()=>S.timer>0?`Didn’t get the code? Resend in <b style="color:var(--primary)">0:${String(S.timer).padStart(2,'0')}</b>`:`Didn’t get the code? <button class="textlink" style="padding:0" onclick="S.timer=24;toast('New code sent (demo)');render()">Resend code</button>`;
+function key(k){if(k==='⌫')S.otp=S.otp.slice(0,-1);else if(S.otp.length<4)S.otp+=k;render()}
+setInterval(()=>{if(S.cur==='otp'&&S.timer>0){S.timer--;const el=$('#resend');if(el)el.innerHTML=resendText()}},1000);
+
+R.details=()=>{const ok=S.first.trim()&&S.last.trim();const chk="$('#detBtn').disabled=!(S.first.trim()&&S.last.trim())";return{html:`${hdr()}
+ <div class="title">Tell us about yourself</div><p class="copy">Riders and drivers will see this on your profile.</p>
+ <label class="label" for="fn">First name</label><input id="fn" class="input" placeholder="Enter your first name" value="${esc(S.first)}" oninput="S.first=this.value;${chk}">
+ <label class="label" for="ln">Last name</label><input id="ln" class="input" placeholder="Enter your last name" value="${esc(S.last)}" oninput="S.last=this.value;${chk}">`,
+ foot:`<button id="detBtn" class="btn primary" ${ok?'':'disabled'} onclick="go('location')">Continue  ›</button>`}};
+
+R.location=()=>({html:`${hdr()}
+ ${map({h:220,me:true,label:'<span class="mapchip" style="left:50%;top:14px;transform:translateX(-50%)">📍 Dublin 2, Co. Dublin</span>'})}
+ <div class="title">Turn on location</div><p class="copy">So we can find nearby rides and show you relevant drivers and passengers in your area.</p>`,
+ foot:`<button class="btn primary" onclick="S.overlay='perm';render()">Allow location access  ›</button><div style="text-align:center"><button class="textlink" onclick="go('manual')">Enter address manually</button></div>`,
+ overlay:S.overlay==='perm'?`<div class="overlay"><div class="dialog"><div class="bd"><div>📍</div><b>Allow “TAC” to use your location?</b><small>Used to find rides near you. (Simulated device prompt)</small></div>
+ <button onclick="S.loc='Dublin 2, Co. Dublin';go('home')">While using the app</button><button onclick="S.loc='Dublin 2, Co. Dublin';go('home')">Only this time</button><button onclick="toast('Permission denied. Enter your address instead.');go('manual')">Don’t allow</button></div></div>`:''});
+
+R.manual=()=>({html:`${hdr('Your address')}
+ <div class="title" style="font-size:22px">Enter your address</div><p class="copy">We’ll use this as your default pickup area.</p>
+ <input id="addr" class="input" placeholder="Street, town or Eircode" value="${esc(S.addr)}" oninput="S.addr=this.value;$('#addrBtn').disabled=!this.value.trim()">
+ <div class="sugg" style="margin-top:8px">${['12 Grafton Street, Dublin 2','Eyre Square, Galway','Patrick Street, Cork'].map(a=>`<button onclick="S.addr='${a}';render()"><span>📍</span><span><b>${a}</b><small>Suggested (demo)</small></span></button>`).join('')}</div>`,
+ foot:`<button id="addrBtn" class="btn primary" ${S.addr.trim()?'':'disabled'} onclick="S.loc=S.addr;go('home')">Save address  ›</button>`});
+
+R.home=()=>({html:`<div class="brandrow" style="margin-bottom:10px"><div><small style="color:var(--muted)">📍 ${esc(S.loc||'Dublin 2, Co. Dublin')}</small><div style="font-size:20px;font-weight:800;color:var(--navy)">Hi ${esc(S.first||'there')} 👋</div></div><span class="av" style="background:var(--navy)">${esc((S.first[0]||'?')+(S.last[0]||'')).toUpperCase()}</span></div>
+ <div class="toggle"><button class="on">Find a ride</button><button onclick="go('d1')">Offer a ride</button></div>
+ <button class="whereto" onclick="S.q='';S.to='';go('search')"><span class="s">🔍</span><span><b>Where to?</b><small>Search destination, date and seats</small></span></button>
+ ${map({h:120,me:true})}
+ <div style="font-weight:800;color:var(--navy);font-size:14px;margin-bottom:2px">Popular from Dublin</div>
+ ${['Galway','Cork','Limerick'].map(n=>{const p=PLACES.find(x=>x.name===n);return`<button class="recent" onclick="S.to='${n}';S.q='${n}';go('search')"><span class="ico">🕘</span><span><b>${n}</b><small>${p.sub} · from ${eur(Math.round(11*p.f))}/seat</small></span><span style="margin-left:auto;color:var(--muted)">›</span></button>`}).join('')}
+ <div class="eco" style="margin-top:12px"><span>🌱</span>Book your first shared ride and start tracking the CO₂ you save.</div>`,
+ nav:'home'});
+
+R.search=()=>({html:`${hdr('Find a ride')}
+ <div class="fromto"><div class="ln"><span class="dot" style="background:var(--success)"></span><input value="Current location · Dublin 2" readonly aria-label="From"></div>
+ <div class="ln"><span class="dot" style="background:var(--primary)"></span><input id="toIn" placeholder="Where are you going?" value="${esc(S.q)}" oninput="typeTo(this.value)" aria-label="To" autocomplete="off"></div>
+ <button class="swap" onclick="toast('In this demo all rides start from Dublin.')" aria-label="Swap">⇅</button></div>
+ <div class="sugg" id="sugg">${suggHtml()}</div>
+ <span class="label">When</span><div class="chips">${DATES.map((d,i)=>`<button class="chip ${S.date===i?'on':''}" onclick="S.date=${i};render()">${d}</button>`).join('')}</div>
+ <span class="label">Seats</span><div class="stepper"><b>${S.seats} passenger${S.seats>1?'s':''}</b>${stepper(S.seats,'S.seats--;render()','S.seats++;render()',1,4)}</div>`,
+ foot:`<button id="searchBtn" class="btn primary" ${S.to?'':'disabled'} onclick="doSearch()">Search rides  ›</button>`});
+function suggHtml(){
+ const q=S.q.trim().toLowerCase();
+ if(S.to) return `<div style="padding:10px 2px;font-size:12px;color:var(--success);font-weight:700">✓ ${esc(S.to)} selected</div>`;
+ const list=PLACES.filter(p=>!q||p.name.toLowerCase().includes(q)||p.sub.toLowerCase().includes(q));
+ return list.map(p=>`<button onclick="setTo('${p.name}')"><span>📍</span><span><b>${p.name}</b><small>${p.sub}</small></span></button>`).join('')||'<div style="padding:10px 2px;color:var(--muted);font-size:12px">No matching places in the demo list.</div>';
+}
+function typeTo(v){S.q=v;const m=PLACES.find(p=>p.name.toLowerCase()===v.trim().toLowerCase());S.to=m?m.name:'';$('#sugg').innerHTML=suggHtml();$('#searchBtn').disabled=!S.to}
+function setTo(n){S.to=n;S.q=n;render()}
+function doSearch(){S.ride=null;loading('Finding rides…',rides().length?'results':'empty')}
+
+R.results=()=>{const list=rides();return{html:`${hdr()}
+ <div style="display:flex;justify-content:space-between;align-items:center;margin:-4px 0 10px"><div><div style="font-weight:800;color:var(--navy);font-size:17px">Dublin → ${esc(S.to)}</div><small style="color:var(--muted)">${DATELONG[S.date]} · ${S.seats} seat${S.seats>1?'s':''}</small></div><button class="chip" onclick="back()">Edit</button></div>
+ <div class="chips scrollx" style="margin-bottom:12px">${[['earliest','Earliest'],['cheapest','Cheapest'],['rating','Top rated']].map(([k,l])=>`<button class="chip ${S.sort===k?'on':''}" onclick="S.sort='${k}';render()">${l}</button>`).join('')}<button class="chip" onclick="toast('Extra filters are planned for a later phase.')">⚙ Filters</button></div>
+ <small style="color:var(--muted);display:block;margin-bottom:8px">${list.length} rides found</small>
+ ${list.map(r=>`<button class="ridecard" onclick="pickRide('${r.id}')">
+  <div class="times"><span>${r.dep}<small>Dublin</small></span><i></i><span style="text-align:right">${r.arr}<small>${r.dest.name}</small></span></div>
+  <div style="font-size:12px;color:var(--muted);margin-top:6px">📍 Pickup: ${r.pickup}</div><div class="hr"></div>
+  <div class="drv">${av(r)}<span><b>${r.name}</b><small>★ ${r.rating.toFixed(1)} (${r.reviews}) · ${r.car.split(' · ')[0]}</small></span><span class="price"><b>${eur(r.price)}</b><small>per seat</small></span></div>
+  <div class="chips" style="margin-top:10px"><span class="tag ${r.seats===1?'warn':''}">${r.seats===1?'1 seat left':r.seats+' seats left'}</span><span class="tag eco">🌱 Saves ${r.co2} kg CO₂</span></div>
+ </button>`).join('')}
+ <div style="text-align:center"><button class="textlink" onclick="toast('Ride alert created (demo). We’ll notify you about new rides.')">🔔 Create a ride alert</button></div>`}};
+function pickRide(id){S.ride=rides().find(r=>r.id===id);S.bseats=Math.min(S.seats,S.ride.seats);S.pick=0;go('ride')}
+
+R.empty=()=>({html:`${hdr()}
+ <div style="font-weight:800;color:var(--navy);font-size:17px">Dublin → ${esc(S.to)}</div><small style="color:var(--muted)">${DATELONG[S.date]} · ${S.seats} seat${S.seats>1?'s':''}</small>
+ <div class="emptyill">🔍</div><div class="title" style="text-align:center;font-size:22px">No rides yet</div>
+ <p class="copy" style="text-align:center">Nobody is driving this route on ${DATES[S.date].toLowerCase()} yet. Create an alert and we’ll let you know when a ride appears.</p>`,
+ foot:`<button class="btn primary" onclick="toast('Ride alert created (demo).')">🔔 Create ride alert</button><button class="btn outline" onclick="back()">Change search</button><div style="text-align:center"><button class="textlink" onclick="go('d1')">Driving there? Offer this ride</button></div>`});
+
+R.ride=()=>{const r=S.ride;return{html:`${hdr('Ride details')}
+ ${map({h:150,route:true,label:`<span class="mapchip" style="left:10px;top:10px">⏱ ${dur(r.dest.min)}</span>`})}
+ <div class="timeline"><div><b>${r.dep}</b> · Dublin<small>${r.pickup}</small></div><div><b>${r.arr}</b> · ${r.dest.name}<small>${r.dest.sub}</small></div></div>
+ <div class="card" style="margin-top:4px"><div class="drv">${av(r,1)}<span><b>${r.name}</b><small>★ ${r.rating.toFixed(1)} · ${r.reviews} reviews · ${r.trips} rides</small></span></div>
+  <div class="chips" style="margin-top:10px"><span class="tag ok">✓ ID verified</span><span class="tag ok">✓ Phone verified</span></div></div>
+ <div class="card" style="margin-top:10px"><div class="kv"><span>Car</span><b>${r.car}</b></div><div class="kv"><span>Reg.</span><b>${r.plate}</b></div><div class="kv"><span>Seats left</span><b>${r.seats}</b></div>
+  <div class="chips" style="margin-top:8px">${r.prefs.map(p=>`<span class="tag">${p}</span>`).join('')}</div></div>
+ <div style="text-align:center;margin-top:6px"><button class="textlink" onclick="notInPoc('Chat with driver')">💬 Message ${r.name.split(' ')[0]}</button></div>`,
+ foot:`<div style="display:flex;align-items:center;gap:12px"><div><b style="font-size:20px;color:var(--navy)">${eur(r.price)}</b><small style="display:block;color:var(--muted);font-size:11px">per seat</small></div><button class="btn primary" style="flex:1" onclick="go('book')">Book seat  ›</button></div>`}};
+
+R.book=()=>{const r=S.ride;return{html:`${hdr('Book ride')}
+ <div class="card"><div class="drv">${av(r)}<span><b>Dublin → ${r.dest.name}</b><small>${DATELONG[S.date]} · ${r.dep} with ${r.name}</small></span></div></div>
+ <span class="label">Seats</span><div class="stepper"><b>${S.bseats} seat${S.bseats>1?'s':''}</b>${stepper(S.bseats,'S.bseats--;render()','S.bseats++;render()',1,r.seats)}</div>
+ <span class="label">Pickup point</span>${pickups(r).map((p,i)=>`<button class="radio ${S.pick===i?'on':''}" onclick="S.pick=${i};render()"><i></i><span><b>${p}</b><small>${i===0?'Driver’s pickup · '+r.dep:'Extra stop · '+addMin(r.dep,-15)}</small></span></button>`).join('')}
+ <span class="label">Payment</span>${[['card','💳 Card •••• 4242','Demo card, no payment is taken'],['cash','💶 Cash to driver','Pay on the day']].map(([k,t,s])=>`<button class="radio ${S.pay===k?'on':''}" onclick="S.pay='${k}';render()"><i></i><span><b>${t}</b><small>${s}</small></span></button>`).join('')}
+ <span class="label">Price</span><div class="card"><div class="sum"><span>${eur(r.price)} × ${S.bseats} seat${S.bseats>1?'s':''}</span><span>${eur(r.price*S.bseats)}</span></div><div class="sum"><span>Service fee</span><span>€0.50</span></div><div class="sum total"><span>Total</span><span>${eur(total())}</span></div></div>`,
+ foot:`<button class="btn primary" onclick="loading('Confirming your seat…','confirmed',makeBooking)">Confirm booking · ${eur(total())}</button>`}};
+
+R.confirmed=()=>{const b=S.booking,r=b.ride;return{html:`<div class="success"><div class="check"><span>✓</span></div>
+ <div class="title" style="font-size:24px">Seat booked!</div><p class="copy">${r.name} has been notified (demo).</p></div>
+ <div class="card"><div class="kv"><span>Route</span><b>Dublin → ${r.dest.name}</b></div><div class="kv"><span>When</span><b>${b.date} · ${r.dep}</b></div><div class="kv"><span>Pickup</span><b>${b.pickup}</b></div><div class="kv"><span>Seats</span><b>${b.seats}</b></div><div class="kv"><span>Payment</span><b>${b.pay}</b></div><div class="kv"><span>Total</span><b>${eur(b.total)}</b></div><div class="kv"><span>Booking ref.</span><b>${b.ref}</b></div></div>
+ <div class="eco" style="margin-top:12px"><span>🌱</span>You’ll save about ${r.co2*b.seats} kg CO₂ by sharing this trip.</div>`,
+ foot:`<button class="btn primary" onclick="go('trip')">Start trip (demo)  ›</button><button class="btn outline" onclick="go('myrides')">View my rides</button><div style="text-align:center"><button class="textlink muted" onclick="go('home')">Back to home</button></div>`}};
+
+R.myrides=()=>({html:`<div style="font-size:22px;font-weight:800;color:var(--navy);margin:4px 0 8px">My rides</div>
+ <div class="segtabs"><button class="${S.tab==='up'?'on':''}" onclick="S.tab='up';render()">Upcoming</button><button class="${S.tab==='past'?'on':''}" onclick="S.tab='past';render()">Past</button></div>
+ ${S.tab==='up'?(S.bookings.length?S.bookings.map((b,i)=>`<button class="ridecard" onclick="S.booking=S.bookings[${i}];S.ride=S.booking.ride;go('confirmed')"><div class="drv">${av(b.ride)}<span><b>Dublin → ${b.ride.dest.name}</b><small>${b.date} · ${b.ride.dep}</small></span><span class="price"><span class="tag ok">Booked</span></span></div><div style="font-size:12px;color:var(--muted);margin-top:8px">📍 ${b.pickup} · ${b.ref}</div></button>`).join(''):`<div class="emptyill">🎫</div><p class="copy" style="text-align:center">No upcoming rides yet.</p><button class="btn primary" onclick="go('search')">Find a ride</button>`)
+ :[['Cork','Sun 18 Oct','Ciarán O.','CO','#15243C'],['Galway','Fri 9 Oct','Seán M.','SM','#F36B21']].map(([d,t,n,i,c])=>`<div class="ridecard"><div class="drv"><span class="av" style="background:${c}">${i}</span><span><b>Dublin → ${d}</b><small>${t} · with ${n}</small></span><span class="price"><span class="tag">Completed</span></span></div><div style="font-size:12px;color:var(--muted);margin-top:8px">★★★★★ You rated this ride · 🌱 9 kg CO₂ saved</div></div>`).join('')}`,
+ nav:'myrides'});
+
+R.trip=()=>{const r=S.ride;return{html:`${hdr('Trip in progress')}
+ ${map({h:230,route:true,car:true,label:`<span class="mapchip" style="left:10px;top:10px">🟢 Live (simulated)</span>`})}
+ <div style="font-size:20px;font-weight:800;color:var(--navy)">On the way to ${r.dest.name}</div><p class="copy" style="margin:2px 0 12px">Arriving around <b style="color:var(--primary)">${r.arr}</b> · ${r.dest.sub}</p>
+ <div class="card"><div class="drv">${av(r)}<span><b>${r.name}</b><small>${r.car} · ${r.plate}</small></span><span class="price"><button class="iconbtn" style="font-size:15px" onclick="notInPoc('In-app calling')" aria-label="Call">📞</button></span></div></div>
+ <div class="row" style="margin-top:12px"><button class="btn outline" style="flex:1" onclick="toast('Trip link shared (demo).')">↗ Share trip</button><button class="sos" onclick="notInPoc('SOS / safety alert')">SOS</button></div>`,
+ foot:`<button class="btn primary" onclick="S.rating=0;S.tags=[];go('rate')">End trip (demo)  ›</button>`}};
+
+R.rate=()=>{const r=S.ride,b=S.booking;return{html:`<div class="success"><div class="check"><span>🎉</span></div><div class="title" style="font-size:24px">You’ve arrived!</div><p class="copy">${r.dest.name} · ${r.dest.sub}</p></div>
+ <div class="card"><div class="kv"><span>Fare paid</span><b>${eur(b?b.total:r.price+.5)}</b></div><div class="kv"><span>CO₂ saved</span><b style="color:var(--success)">🌱 ${r.co2*(b?b.seats:1)} kg</b></div></div>
+ <div style="text-align:center;margin-top:16px;font-weight:800;color:var(--navy)">How was your ride with ${r.name.split(' ')[0]}?</div>
+ <div class="stars">${[1,2,3,4,5].map(i=>`<button class="${i<=S.rating?'on':''}" onclick="S.rating=${i};render()" aria-label="${i} stars">★</button>`).join('')}</div>
+ <div class="chips" style="justify-content:center">${['Punctual','Friendly','Safe driving','Clean car'].map(t=>`<button class="chip ${S.tags.includes(t)?'on':''}" onclick="S.tags.includes('${t}')?S.tags=S.tags.filter(x=>x!=='${t}'):S.tags.push('${t}');render()">${t}</button>`).join('')}</div>`,
+ foot:`<button class="btn primary" ${S.rating?'':'disabled'} onclick="toast('Thanks for rating ${r.name.split(' ')[0]}!');go('home')">Submit rating</button><div style="text-align:center"><button class="textlink muted" onclick="go('home')">Skip</button></div>`}};
+
+const ORIGINS=['Dublin · Heuston Station','Dublin · Dublin 2','Dublin Airport'];
+const DESTS=PLACES.filter(p=>!p.none).map(p=>p.name+' · '+p.sub);
+const sel=(arr,v,f)=>`<select class="input" onchange="${f}">${arr.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
+R.d1=()=>{const o=S.offer;return{html:`${hdr('Offer a ride')}
+ <div class="title" style="font-size:22px">Where are you driving?</div><p class="copy">Share your empty seats and split the cost of the journey.</p>
+ <span class="label">From</span>${sel(ORIGINS,o.from,'S.offer.from=this.value')}
+ <span class="label">To</span>${sel(DESTS,o.to,'S.offer.to=this.value')}
+ <span class="label">Date</span><div class="chips">${DATES.map((d,i)=>`<button class="chip ${o.date===i?'on':''}" onclick="S.offer.date=${i};render()">${d}</button>`).join('')}</div>
+ <span class="label">Departure time</span><input class="input" type="time" value="${o.time}" onchange="S.offer.time=this.value">`,
+ foot:`<button class="btn primary" onclick="go('d2')">Next  ›</button>`}};
+R.d2=()=>{const o=S.offer;return{html:`${hdr('Seats & price')}
+ <div class="card"><b style="color:var(--navy)">${esc(o.from.split(' · ')[0])} → ${esc(o.to.split(' · ')[0])}</b><small style="display:block;color:var(--muted)">${DATELONG[o.date]} · ${esc(o.time)}</small></div>
+ <span class="label">Available seats</span><div class="stepper"><b>${o.seats} seat${o.seats>1?'s':''}</b>${stepper(o.seats,'S.offer.seats--;render()','S.offer.seats++;render()',1,4)}</div>
+ <span class="label">Price per seat</span><div class="stepper"><b>${eur(o.price)}</b>${stepper(o.price,'S.offer.price--;render()','S.offer.price++;render()',3,40)}</div>
+ <small style="color:var(--muted)">Suggested for this route: €11–€15</small>
+ <span class="label">Car</span>${CARS.map((c,i)=>`<button class="radio ${o.car===i?'on':''}" onclick="S.offer.car=${i};render()"><i></i><span><b>${c.split(' · ')[0]}</b><small>${c.split(' · ').slice(1).join(' · ')}</small></span></button>`).join('')}
+ <div class="eco"><span>💶</span>Up to ${eur(o.seats*o.price)} towards fuel if every seat is booked.</div>`,
+ foot:`<button class="btn primary" onclick="loading('Publishing your ride…','d3')">Publish ride  ›</button>`}};
+R.d3=()=>{const o=S.offer;return{html:`<div class="success"><div class="check"><span>✓</span></div><div class="title" style="font-size:24px">Ride published!</div><p class="copy">Passengers can now find and book your ride (demo).</p></div>
+ <div class="card"><div class="kv"><span>Route</span><b>${esc(o.from.split(' · ')[0])} → ${esc(o.to.split(' · ')[0])}</b></div><div class="kv"><span>When</span><b>${DATELONG[o.date]} · ${esc(o.time)}</b></div><div class="kv"><span>Seats</span><b>${o.seats}</b></div><div class="kv"><span>Price</span><b>${eur(o.price)} / seat</b></div><div class="kv"><span>Car</span><b>${CARS[o.car].split(' · ')[0]}</b></div></div>
+ <div class="eco" style="margin-top:12px"><span>🔔</span>We’ll notify you when someone books a seat.</div>`,
+ foot:`<button class="btn primary" onclick="go('home')">Back to home</button>`}};
+
+/* ---------- render ---------- */
+function render(){
+ const r=R[S.cur]();
+ const sc=$('#screen');
+ sc.className='screen '+(r.cls||'');
+ let ov=r.overlay||'';
+ if(S.overlay==='loading') ov=`<div class="overlay"><div class="loading"><div class="spin"></div>${S.loadMsg}</div></div>`;
+ sc.innerHTML=`<div class="island"></div><div class="sbar"><span>9:41</span><span class="ic">▂▄▆ 5G <i class="batt"></i></span></div>
+  <div class="scroll" id="scroll">${r.html}</div>${r.foot?`<div class="foot">${r.foot}</div>`:''}${r.nav?nav(r.nav):''}${ov}<div class="homebar"></div>`;
+ renderList(); renderSide();
+}
+function renderList(){
+ $('#flowlist').innerHTML=`<h2>Screens</h2><p class="sub">Click to jump. Dashed = alternative path.</p>`+GROUPS.map(([g,ids])=>`<div class="grp">${g}</div>`+ids.map(id=>{const m=META[id];return`<button class="mapbtn ${m.alt?'alt':''} ${S.seen.has(id)?'seen':''} ${S.cur===id?'cur':''}" onclick="jump('${id}')"><span class="n">${m.n}</span>${m.t}${S.seen.has(id)&&S.cur!==id?'<span class="tick">✓</span>':''}</button>`}).join('')).join('');
+}
+function renderSide(){
+ const m=META[S.cur];const done=PRIMARY.filter(id=>S.seen.has(id)).length;
+ const grp=GROUPS.find(g=>g[1].includes(S.cur))[0];
+ $('#stepinfo').textContent=`${m.n} · ${m.t}`;
+ $('#side').innerHTML=`<span class="badge ${m.alt?'alt':''}">${m.alt?'ALTERNATIVE PATH':'SCREEN '+m.n} · ${grp.toUpperCase()}</span>
+  <h3>${m.t}</h3><p>${m.d}</p>
+  <h4>Next actions (tap to go)</h4>
+  ${m.nx.map(([l,t])=>`<button class="nextbtn" onclick="jump('${t}')"><span>${l}<br><small>→ ${META[t].n} ${META[t].t}</small></span><span class="arr">›</span></button>`).join('')}
+  <h4>Main path progress</h4>
+  <div class="progress"><span style="width:${Math.round(done/PRIMARY.length*100)}%"></span></div>
+  <small style="color:var(--muted)">${done} of ${PRIMARY.length} main-path screens visited</small>
+  <h4>Backend later (not in this POC)</h4>
+  <div class="be"><b>${m.be}</b></div>
+  <div class="notice"><b>Demo only:</b> mock data, no backend. Nothing is sent, charged or stored.</div>`;
+}
+
+/* ---------- flow map tab ---------- */
+function renderFlowMap(){
+ const rows=[
+  ['Onboarding',['splash','welcome','phone','otp','details','location'],[['welcome','google'],['location','manual']]],
+  ['Rider · search location, riders, book a ride',['home','search','results','ride','book','confirmed','trip','rate'],[['search','empty'],['confirmed','myrides']]],
+  ['Driver · offer a ride',['home','d1','d2','d3'],[]]
+ ];
+ $('#flowmap').innerHTML=rows.map(([t,main,alts])=>`<div class="flowrow"><h3>${t}</h3><div class="chain">${main.map((id,i)=>`${i?'<span class="farrow">→</span>':''}<button class="fnode" onclick="showTab('demo');jump('${id}')"><span class="n">${META[id].n}</span><b>${META[id].t}</b><small>${META[id].d}</small></button>`).join('')}</div>
+  ${alts.length?`<div class="alts">${alts.map(([f,to])=>`<button class="altbtn" onclick="showTab('demo');jump('${to}')">${META[f].n} ${META[f].t} ⇢ <b>${META[to].n} ${META[to].t}</b></button>`).join('')}</div>`:''}</div>`).join('');
+}
+
+/* ---------- theme tab ---------- */
+const TOKENS=[['primary','#F36B21','CTAs, pins, links'],['primaryLight','#FF8A36','CTA gradient end'],['primaryDark','#D94910','Pressed, splash'],['primarySoft','#FFF0E7','Chips, selected'],['navy','#15243C','Headings, dark UI'],['ink','#243044','Body text'],['muted','#6D7788','Secondary text'],['line','#E2E7EE','Borders'],['bg','#F4F6F9','Page background'],['surface','#FFFFFF','Cards, inputs'],['success','#167C59','Booked, eco, verified'],['warning','#E8A317','Few seats, pending'],['error','#B54732','Errors, SOS']];
+$('#swatches').innerHTML=TOKENS.map(([n,h,u])=>`<div class="swatch"><div style="background:${h}"></div><p><b>${n}</b><code>${h}</code><br><span style="color:var(--muted);font-size:11px">${u}</span></p></div>`).join('');
+
+/* ---------- tabs ---------- */
+function showTab(t){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));['demo','flow','theme'].forEach(id=>$('#'+id).hidden=id!==t);if(t==='flow')renderFlowMap()}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+
+render();
+</script>
+</body>
+</html>

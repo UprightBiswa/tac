@@ -1,0 +1,6 @@
+{
+  "FLAVOR": "prod",
+  "API_BASE_URL": "https://api.example.ie/api/v1",
+  "USE_MOCK_DATA": false,
+  "ENABLE_HTTP_LOGS": false
+}
